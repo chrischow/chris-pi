@@ -18,7 +18,7 @@ export function isInside(root: string, value: string): boolean {
   return normalizedValue === root || normalizedValue.startsWith(normalizedRoot)
 }
 
-export default function loadSettings(ctx: ExtensionContext): LockdownSettings {
+export function loadSettings(ctx: ExtensionContext): LockdownSettings {
   const sm = SettingsManager.create(ctx.cwd)
   const projectSettings = sm.getProjectSettings()
   const globalSettings = sm.getGlobalSettings()

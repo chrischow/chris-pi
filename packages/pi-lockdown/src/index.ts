@@ -4,7 +4,7 @@ import { type ExtensionAPI, getSettingsListTheme, isToolCallEventType } from '@e
 import { Box, Container, type SettingItem, SettingsList, Text } from '@earendil-works/pi-tui'
 
 import { lockdownLevelOptions, LockdownLevelSchema, LockdownSettingsSchema } from './schema'
-import loadSettings, { isInside } from './utils'
+import { isInside, loadSettings } from './utils'
 
 // Settings
 let lockdownSettings = LockdownSettingsSchema.parse({
