@@ -1,10 +1,10 @@
 import path from 'node:path'
 
 import { type ExtensionAPI, getSettingsListTheme, isToolCallEventType } from '@earendil-works/pi-coding-agent'
-import { Box, Container, type SettingItem, SettingsList, Text } from '@earendil-works/pi-tui'
+import { Box, Container, SettingsList, Text } from '@earendil-works/pi-tui'
 
-import { lockdownLevelOptions, LockdownLevelSchema, LockdownSettingsSchema } from './schema'
-import { isInside, loadSettings } from './utils'
+import { LockdownLevelSchema, LockdownSettingsSchema } from './schema'
+import { constructSettingsList, isInside, loadSettings } from './utils'
 
 // Settings
 let lockdownSettings = LockdownSettingsSchema.parse({
@@ -116,80 +116,7 @@ export default function (pi: ExtensionAPI) {
   pi.registerCommand('lockdown:session-permissions', {
     description: 'Configure file access permissions for session.',
     handler: async (_args, ctx) => {
-      const items: SettingItem[] = [
-        {
-          id: 'external-protected-read',
-          label: 'Read   external  protected   files',
-          currentValue: lockdownSettings.external.protected.read,
-          values: lockdownLevelOptions,
-        },
-        {
-          id: 'external-protected-edit',
-          label: 'Edit   external  protected   files',
-          currentValue: lockdownSettings.external.protected.edit,
-          values: lockdownLevelOptions,
-        },
-        {
-          id: 'external-protected-write',
-          label: 'Write  external  protected   files',
-          currentValue: lockdownSettings.external.protected.write,
-          values: lockdownLevelOptions,
-        },
-        {
-          id: 'external-unprotected-read',
-          label: 'Read   external  unprotected files',
-          currentValue: lockdownSettings.external.unprotected.read,
-          values: lockdownLevelOptions,
-        },
-        {
-          id: 'external-unprotected-edit',
-          label: 'Edit   external  unprotected files',
-          currentValue: lockdownSettings.external.unprotected.edit,
-          values: lockdownLevelOptions,
-        },
-        {
-          id: 'external-unprotected-write',
-          label: 'Write  external  unprotected files',
-          currentValue: lockdownSettings.external.unprotected.write,
-          values: lockdownLevelOptions,
-        },
-        {
-          id: 'internal-protected-read',
-          label: 'Read   internal  protected   files',
-          currentValue: lockdownSettings.internal.protected.read,
-          values: lockdownLevelOptions,
-        },
-        {
-          id: 'internal-protected-edit',
-          label: 'Edit   internal  protected   files',
-          currentValue: lockdownSettings.internal.protected.edit,
-          values: lockdownLevelOptions,
-        },
-        {
-          id: 'internal-protected-write',
-          label: 'Write  internal  protected   files',
-          currentValue: lockdownSettings.internal.protected.write,
-          values: lockdownLevelOptions,
-        },
-        {
-          id: 'internal-unprotected-read',
-          label: 'Read   internal  unprotected files',
-          currentValue: lockdownSettings.internal.unprotected.read,
-          values: lockdownLevelOptions,
-        },
-        {
-          id: 'internal-unprotected-edit',
-          label: 'Edit   internal  unprotected files',
-          currentValue: lockdownSettings.internal.unprotected.edit,
-          values: lockdownLevelOptions,
-        },
-        {
-          id: 'internal-unprotected-write',
-          label: 'Write  internal  unprotected files',
-          currentValue: lockdownSettings.internal.unprotected.write,
-          values: lockdownLevelOptions,
-        },
-      ]
+      const items = constructSettingsList(lockdownSettings)
 
       await ctx.ui.custom((_tui, theme, _kb, done) => {
         const container = new Container()

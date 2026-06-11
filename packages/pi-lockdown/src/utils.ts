@@ -1,8 +1,10 @@
 import path from 'node:path'
 
 import { type ExtensionContext, SettingsManager } from '@earendil-works/pi-coding-agent'
+import type { SettingItem } from '@earendil-works/pi-tui'
 
-import { type LockdownSettings, LockdownSettingsSchema } from './schema'
+import { LOCATION, PERM_ACTION, PROTECTION } from './constants'
+import { lockdownLevelOptions, type LockdownSettings, LockdownSettingsSchema } from './schema'
 
 export function isInside(root: string, value: string): boolean {
   // Resolve `value` relative to `root`, NOT the process CWD.
@@ -46,4 +48,28 @@ export function loadSettings(ctx: ExtensionContext): LockdownSettings {
     external: { protected: {}, unprotected: {} },
     internal: { protected: {}, unprotected: {} },
   })
+}
+
+export function constructSettingsList(lockdownSettings: LockdownSettings): SettingItem[] {
+  const items: SettingItem[] = []
+  for (const location of LOCATION) {
+    for (const protection of PROTECTION) {
+      for (const permAction of PERM_ACTION) {
+        const id = `${location}-${protection}-${permAction}`
+        const fullLabel = permAction === 'other' ? `${permAction} tool` : permAction
+        const titleCaseLabel = fullLabel[0]?.toUpperCase() + fullLabel.slice(1)
+        const label = `${titleCaseLabel.padEnd(12, ' ')}>  ${location}  ${protection.padEnd(11, ' ')}`
+        const currentValue = lockdownSettings[location][protection][permAction]
+
+        items.push({
+          id,
+          label,
+          currentValue,
+          values: lockdownLevelOptions,
+        })
+      }
+    }
+  }
+
+  return items
 }
