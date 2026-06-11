@@ -18,7 +18,7 @@ If you need to amend settings for the session:
 | `/lockdown:session-permissions` | Open the interactive session permissions dialog |
 | `/lockdown:reset` | Reset all permissions to settings/default values |
 
-> Note: `/lockdown:session-permissions` allows you to toggle any of the 12 permission slots on the fly. Changes apply immediately and last for the current session only.
+**Note:** `/lockdown:session-permissions` allows you to toggle any of the 16 permission slots on the fly. Changes apply immediately and last for the current session only.
 
 ## What It Does
 When you start Pi, Lockdown automatically sets the tools listed in the `tools` (default Pi tools, less Bash) and `customTools` properties in your settings.
@@ -52,13 +52,13 @@ Add a `lockdown` property in your project or global `settings.json` with one or 
         "read": "block",
         "write": "block",
         "edit": "block",
-        "other": "block",
+        "other": "block"
       },
       "unprotected": {
         "read": "warn",
         "write": "block",
         "edit": "block",
-        "other": "block",
+        "other": "block"
       }
     },
     "internal": {
@@ -66,13 +66,13 @@ Add a `lockdown` property in your project or global `settings.json` with one or 
         "read": "warn",
         "write": "warn",
         "edit": "warn",
-        c
+        "other": "warn"
       },
       "unprotected": {
         "read": "allow",
         "write": "warn",
         "edit": "warn",
-        "other": "warn",
+        "other": "warn"
       }
     }
   }
