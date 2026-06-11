@@ -3,7 +3,7 @@ node_modules/
 dist/
 
 # Configs
-# *.config.js
+*.config.js
 
 # Env files
 .env

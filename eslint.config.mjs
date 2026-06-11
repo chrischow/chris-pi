@@ -47,12 +47,12 @@ export default defineConfig([
         'warn',
         {
           argsIgnorePattern: '^_',
-          vavrsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
         },
       ],
     },
   },
   {
-    ignores: ['**/dist/**', '**/build/**', '**/node_modules/**'],
+    ignores: ['**/dist/**', '**/build/**', '**/node_modules/**', '**/*.config.js'],
   },
 ])
