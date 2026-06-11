@@ -1,0 +1,42 @@
+{
+  "name": "@chrischow/pi-lockdown",
+  "version": "0.1.0",
+  "description": "A Pi extension to add security constraints to agent tool usage.",
+  "author": "Chris Chow",
+  "license": "MIT",
+  "keywords": [
+    "pi-package",
+    "pi-extension",
+    "pi-coding-agent",
+    "lockdown",
+    "security"
+  ],
+  "scripts": {
+    "format": "prettier --write './src/*.{ts,js}'",
+    "lint": "eslint 'src/**/*.ts' --fix",
+    "check": "tsc --noEmit",
+    "build": "tsc -p tsconfig.build.json",
+    "prepublishOnly": "npm run build"
+  },
+  "files": [
+    "dist"
+  ],
+  "pi": {
+    "extensions": [
+      "dist/index.js"
+    ]
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*",
+    "@earendil-works/pi-tui": "*",
+    "typebox": "*"
+  },
+  "dependencies": {
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@earendil-works/pi-coding-agent": "^0.79.1",
+    "@earendil-works/pi-tui": "^0.79.1",
+    "@types/node": "^25.9.3"
+  }
+}
