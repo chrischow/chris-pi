@@ -1,0 +1,39 @@
+{
+  "name": "chris-pi",
+  "private": true,
+  "workspace": [
+    "packages/*"
+  ],
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "commitlint": "commitlint --edit $1",
+    "format": "prettier --write 'packages/**/*.{ts,js}'",
+    "lint": "eslint . --fix",
+    "prepare": "husky"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@commitlint/cli": "^21.0.2",
+    "@commitlint/config-conventional": "^21.0.2",
+    "@eslint/js": "^10.0.1",
+    "@typescript-eslint/eslint-plugin": "^8.61.0",
+    "@typescript-eslint/parser": "^8.61.0",
+    "eslint": "^10.4.1",
+    "eslint-plugin-simple-import-sort": "^13.0.0",
+    "globals": "^17.6.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.7",
+    "prettier": "^3.8.4",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.61.0"
+  },
+  "lint-staged": {
+    "**/*.ts": [
+      "npm run format",
+      "eslint --fix"
+    ]
+  }
+}

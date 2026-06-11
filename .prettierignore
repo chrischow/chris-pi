@@ -1,0 +1,13 @@
+# Folders 
+node_modules/
+dist/
+
+# Configs
+# *.config.js
+
+# Env files
+.env
+.env.*
+
+# Lock files
+package-lock.json

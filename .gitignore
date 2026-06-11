@@ -1,0 +1,10 @@
+# Dependencies
+**/node_modules/
+packages/*/dist/
+packages/*/node_modules/
+
+# Env vars
+**/.env
+**/.env.staging
+**/.env.production
+**/.env.local
