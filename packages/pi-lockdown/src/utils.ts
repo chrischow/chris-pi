@@ -20,24 +20,46 @@ export function isInside(root: string, value: string): boolean {
   return normalizedValue === root || normalizedValue.startsWith(normalizedRoot)
 }
 
-export function loadSettings(ctx: ExtensionContext): LockdownSettings {
+export function loadSettings(ctx: ExtensionContext): LockdownSettings | null {
   const sm = SettingsManager.create(ctx.cwd)
   const projectSettings = sm.getProjectSettings()
   const globalSettings = sm.getGlobalSettings()
 
   // Read project settings first
-  const { success, data: projectLockdownSettings } = LockdownSettingsSchema.safeParse(
-    (projectSettings as Record<string, unknown>).lockdown,
-  )
+  const {
+    success: projectSuccess,
+    data: projectLockdownSettings,
+    error: projectError,
+  } = LockdownSettingsSchema.safeParse((projectSettings as Record<string, unknown>).lockdown)
 
-  if (success && projectLockdownSettings) {
+  if (!projectSuccess && projectError.issues.length > 0) {
+    for (const issue of projectError.issues) {
+      ctx.ui.notify(`[LOCKDOWN] ${issue.path[0] as string} - ${issue.message}`, 'error')
+    }
+
+    ctx.shutdown()
+    return null
+  }
+
+  if (projectSuccess && projectLockdownSettings) {
     return projectLockdownSettings
   }
 
   // Global settings fallback
-  const { success: globalSuccess, data: globalLockdownSettings } = LockdownSettingsSchema.safeParse(
-    (globalSettings as Record<string, unknown>).lockdown,
-  )
+  const {
+    success: globalSuccess,
+    data: globalLockdownSettings,
+    error: globalError,
+  } = LockdownSettingsSchema.safeParse((globalSettings as Record<string, unknown>).lockdown)
+
+  if (!globalSuccess && globalError.issues.length > 0) {
+    for (const issue of globalError.issues) {
+      ctx.ui.notify(`[LOCKDOWN] ${issue.path[0] as string} - ${issue.message}`, 'error')
+    }
+
+    ctx.shutdown()
+    return null
+  }
 
   if (globalSuccess && globalLockdownSettings) {
     return globalLockdownSettings

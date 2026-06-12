@@ -19,7 +19,14 @@ export default function (pi: ExtensionAPI) {
   // Set allowed tools
   pi.on('session_start', (_, ctx) => {
     // Load settings
-    lockdownSettings = loadSettings(ctx)
+    const loadedSettings = loadSettings(ctx)
+    if (!loadedSettings) {
+      ctx.ui.notify('Could not load settings.', 'error')
+      ctx.shutdown()
+      return
+    }
+
+    lockdownSettings = loadedSettings
 
     // Set tools
     const tools = (lockdownSettings.defaultTools as string[]).concat(lockdownSettings.customTools)
@@ -107,7 +114,13 @@ export default function (pi: ExtensionAPI) {
   pi.registerCommand('lockdown:reset', {
     description: 'Reset permissions to those specified in settings.json and/or defaults.',
     handler: async (_, ctx) => {
-      lockdownSettings = loadSettings(ctx)
+      const loadedSettings = loadSettings(ctx)
+      if (!loadedSettings) {
+        ctx.ui.notify('Could not update permissions.', 'error')
+        ctx.shutdown()
+        return
+      }
+      lockdownSettings = loadedSettings
       ctx.ui.notify('Permissions have been reset.', 'info')
     },
   })
