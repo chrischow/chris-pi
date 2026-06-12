@@ -11,32 +11,34 @@ export const LockdownSettingsSchema = z.object({
   defaultTools: DefaultToolsSchema.default([...defaultTools]),
   customTools: z.array(z.string()).default([]),
   protectedPatterns: z.array(z.string()).default(['**/.env*', '**/.git/**', '**/node_modules/**']),
-  external: z.object({
-    protected: z.object({
-      read: LockdownLevelSchema.default('block'),
-      write: LockdownLevelSchema.default('block'),
-      edit: LockdownLevelSchema.default('block'),
-      other: LockdownLevelSchema.default('block'),
+  fileAccess: z.object({
+    external: z.object({
+      protected: z.object({
+        read: LockdownLevelSchema.default('block'),
+        write: LockdownLevelSchema.default('block'),
+        edit: LockdownLevelSchema.default('block'),
+        other: LockdownLevelSchema.default('block'),
+      }),
+      unprotected: z.object({
+        read: LockdownLevelSchema.default('allow'),
+        write: LockdownLevelSchema.default('block'),
+        edit: LockdownLevelSchema.default('block'),
+        other: LockdownLevelSchema.default('block'),
+      }),
     }),
-    unprotected: z.object({
-      read: LockdownLevelSchema.default('allow'),
-      write: LockdownLevelSchema.default('block'),
-      edit: LockdownLevelSchema.default('block'),
-      other: LockdownLevelSchema.default('block'),
-    }),
-  }),
-  internal: z.object({
-    protected: z.object({
-      read: LockdownLevelSchema.default('warn'),
-      write: LockdownLevelSchema.default('warn'),
-      edit: LockdownLevelSchema.default('warn'),
-      other: LockdownLevelSchema.default('warn'),
-    }),
-    unprotected: z.object({
-      read: LockdownLevelSchema.default('allow'),
-      write: LockdownLevelSchema.default('warn'),
-      edit: LockdownLevelSchema.default('warn'),
-      other: LockdownLevelSchema.default('warn'),
+    internal: z.object({
+      protected: z.object({
+        read: LockdownLevelSchema.default('warn'),
+        write: LockdownLevelSchema.default('warn'),
+        edit: LockdownLevelSchema.default('warn'),
+        other: LockdownLevelSchema.default('warn'),
+      }),
+      unprotected: z.object({
+        read: LockdownLevelSchema.default('allow'),
+        write: LockdownLevelSchema.default('warn'),
+        edit: LockdownLevelSchema.default('warn'),
+        other: LockdownLevelSchema.default('warn'),
+      }),
     }),
   }),
 })

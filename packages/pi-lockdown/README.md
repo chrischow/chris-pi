@@ -47,32 +47,34 @@ Add a `lockdown` property in your project or global `settings.json` with one or 
       "**/.git/**",
       "**/node_modules/**"
     ],
-    "external": {
-      "protected": {
-        "read": "block",
-        "write": "block",
-        "edit": "block",
-        "other": "block"
+    "fileAccess": {
+      "external": {
+        "protected": {
+          "read": "block",
+          "write": "block",
+          "edit": "block",
+          "other": "block"
+        },
+        "unprotected": {
+          "read": "warn",
+          "write": "block",
+          "edit": "block",
+          "other": "block"
+        }
       },
-      "unprotected": {
-        "read": "warn",
-        "write": "block",
-        "edit": "block",
-        "other": "block"
-      }
-    },
-    "internal": {
-      "protected": {
-        "read": "warn",
-        "write": "warn",
-        "edit": "warn",
-        "other": "warn"
-      },
-      "unprotected": {
-        "read": "allow",
-        "write": "warn",
-        "edit": "warn",
-        "other": "warn"
+      "internal": {
+        "protected": {
+          "read": "warn",
+          "write": "warn",
+          "edit": "warn",
+          "other": "warn"
+        },
+        "unprotected": {
+          "read": "allow",
+          "write": "warn",
+          "edit": "warn",
+          "other": "warn"
+        }
       }
     }
   }

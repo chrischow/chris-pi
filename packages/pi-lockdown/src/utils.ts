@@ -81,7 +81,7 @@ export function constructSettingsList(lockdownSettings: LockdownSettings): Setti
         const fullLabel = permAction === 'other' ? `${permAction} tool` : permAction
         const titleCaseLabel = fullLabel[0]?.toUpperCase() + fullLabel.slice(1)
         const label = `${titleCaseLabel.padEnd(12, ' ')}>  ${location}  ${protection.padEnd(11, ' ')}`
-        const currentValue = lockdownSettings[location][protection][permAction]
+        const currentValue = lockdownSettings.fileAccess[location][protection][permAction]
 
         items.push({
           id,

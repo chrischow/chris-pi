@@ -8,8 +8,10 @@ import { constructSettingsList, isInside, loadSettings } from './utils'
 
 // Settings
 let lockdownSettings = LockdownSettingsSchema.parse({
-  external: { protected: {}, unprotected: {} },
-  internal: { protected: {}, unprotected: {} },
+  fileAccess: {
+    external: { protected: {}, unprotected: {} },
+    internal: { protected: {}, unprotected: {} },
+  },
 })
 
 /**
@@ -83,7 +85,7 @@ export default function (pi: ExtensionAPI) {
       permAction = 'other'
     }
 
-    const permission = lockdownSettings[location][protection][permAction]
+    const permission = lockdownSettings.fileAccess[location][protection][permAction]
 
     switch (permission) {
       case 'block':
@@ -153,7 +155,7 @@ export default function (pi: ExtensionAPI) {
           (id, newValue) => {
             // Handle value change
             const [location, protection, perm] = id.split('-')
-            lockdownSettings[location as 'external' | 'internal'][protection as 'protected' | 'unprotected'][
+            lockdownSettings.fileAccess[location as 'external' | 'internal'][protection as 'protected' | 'unprotected'][
               perm as 'read' | 'write' | 'edit'
             ] = LockdownLevelSchema.parse(newValue)
           },
