@@ -22,7 +22,7 @@ export default function (pi: ExtensionAPI) {
     lockdownSettings = loadSettings(ctx)
 
     // Set tools
-    const tools = lockdownSettings.tools.concat(lockdownSettings.customTools)
+    const tools = (lockdownSettings.defaultTools as string[]).concat(lockdownSettings.customTools)
     pi.setActiveTools(Array.from(new Set(tools)))
   })
 

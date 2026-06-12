@@ -4,10 +4,11 @@ export const lockdownLevelOptions = ['allow', 'warn', 'block']
 export const LockdownLevelSchema = z.enum(lockdownLevelOptions)
 export type LockdownLevel = z.infer<typeof LockdownLevelSchema>
 
-const defaultTools = ['read', 'edit', 'write', 'grep', 'find', 'ls']
+const defaultTools = ['read', 'edit', 'write', 'grep', 'find', 'ls'] as const
+export const DefaultToolsSchema = z.array(z.enum(defaultTools))
 
 export const LockdownSettingsSchema = z.object({
-  tools: z.array(z.string()).default(defaultTools),
+  defaultTools: DefaultToolsSchema.default([...defaultTools]),
   customTools: z.array(z.string()).default([]),
   protectedPatterns: z.array(z.string()).default(['**/.env*', '**/.git/**', '**/node_modules/**']),
   external: z.object({
