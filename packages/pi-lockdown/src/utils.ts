@@ -3,7 +3,7 @@ import path from 'node:path'
 import { type ExtensionContext, SettingsManager } from '@earendil-works/pi-coding-agent'
 import type { SettingItem } from '@earendil-works/pi-tui'
 
-import { LOCATION, PERM_ACTION, PROTECTION } from './constants'
+import { LOCATION, PERM_ACTION, PROTECTION, SETTING_ID_SEPARATOR } from './constants'
 import { lockdownLevelOptions, type LockdownSettings, LockdownSettingsSchema } from './schema'
 
 export function isInside(root: string, value: string): boolean {
@@ -79,7 +79,7 @@ export function constructSettingsList(lockdownSettings: LockdownSettings): Setti
   for (const location of LOCATION) {
     for (const protection of PROTECTION) {
       for (const permAction of PERM_ACTION) {
-        const id = `fileAccess-${location}-${protection}-${permAction}`
+        const id = ['fileAccess', location, protection, permAction].join(SETTING_ID_SEPARATOR)
         const fullLabel = permAction
         const titleCaseLabel = fullLabel[0]?.toUpperCase() + fullLabel.slice(1)
         const label = `${titleCaseLabel.padEnd(12, ' ')}>  ${location}  ${protection.padEnd(11, ' ')}`
@@ -97,7 +97,7 @@ export function constructSettingsList(lockdownSettings: LockdownSettings): Setti
 
   // Custom tools
   Object.keys(lockdownSettings.customTools).forEach((customTool) => {
-    const id = `customTool-${customTool}`
+    const id = ['customTool', customTool].join(SETTING_ID_SEPARATOR)
     const label = customTool.padEnd(36, ' ')
     const currentValue = lockdownSettings.customTools[customTool] ?? 'warn'
 

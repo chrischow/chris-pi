@@ -160,7 +160,7 @@ export default function (pi: ExtensionAPI) {
           getSettingsListTheme(),
           (id, newValue) => {
             // Handle value change
-            const [permType, locationOrCustomTool, protection, perm] = id.split('-')
+            const [permType, locationOrCustomTool, protection, perm] = id.split('__')
             if (permType === 'fileAccess') {
               lockdownSettings.fileAccess[locationOrCustomTool as 'external' | 'internal'][
                 protection as 'protected' | 'unprotected'
