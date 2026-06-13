@@ -3,7 +3,7 @@ import path from 'node:path'
 import { type ExtensionAPI, getSettingsListTheme, isToolCallEventType } from '@earendil-works/pi-coding-agent'
 import { Box, Container, SettingsList, Text } from '@earendil-works/pi-tui'
 
-import { LockdownLevelSchema, LockdownSettingsSchema } from './schema'
+import { type LockdownLevel, LockdownLevelSchema, LockdownSettingsSchema } from './schema'
 import { constructSettingsList, isInside, loadSettings } from './utils'
 
 // Settings
@@ -31,7 +31,7 @@ export default function (pi: ExtensionAPI) {
     lockdownSettings = loadedSettings
 
     // Set tools
-    const tools = (lockdownSettings.defaultTools as string[]).concat(lockdownSettings.customTools)
+    const tools = (lockdownSettings.defaultTools as string[]).concat(Object.keys(lockdownSettings.customTools))
     pi.setActiveTools(Array.from(new Set(tools)))
   })
 
@@ -63,13 +63,15 @@ export default function (pi: ExtensionAPI) {
       inputPath = event.input.path
     } else if (isGrep || isFind || isLs) {
       inputPath = event.input.path ?? '.'
+    } else {
+      inputPath = event.input ? JSON.stringify(event.input) : '.'
     }
 
     const location: 'internal' | 'external' = isInside(ctx.cwd, inputPath) ? 'internal' : 'external'
     const isProtected = lockdownSettings.protectedPatterns.some((pattern) => path.matchesGlob(inputPath, pattern))
     const protection: 'protected' | 'unprotected' = isProtected ? 'protected' : 'unprotected'
 
-    let permAction: 'read' | 'edit' | 'write' | 'other'
+    let permAction: 'read' | 'edit' | 'write' | undefined = undefined
 
     if (isRead) {
       permAction = 'read'
@@ -81,11 +83,15 @@ export default function (pi: ExtensionAPI) {
       permAction = 'edit'
     } else if (isWrite) {
       permAction = 'write'
-    } else {
-      permAction = 'other'
     }
 
-    const permission = lockdownSettings.fileAccess[location][protection][permAction]
+    let permission: LockdownLevel
+    if (permAction && ['read', 'edit', 'write'].includes(permAction)) {
+      permission = lockdownSettings.fileAccess[location][protection][permAction]
+    } else {
+      // Custom tools: Default to warn
+      permission = lockdownSettings.customTools[event.toolName] ?? 'warn'
+    }
 
     switch (permission) {
       case 'block':
@@ -154,10 +160,14 @@ export default function (pi: ExtensionAPI) {
           getSettingsListTheme(),
           (id, newValue) => {
             // Handle value change
-            const [location, protection, perm] = id.split('-')
-            lockdownSettings.fileAccess[location as 'external' | 'internal'][protection as 'protected' | 'unprotected'][
-              perm as 'read' | 'write' | 'edit'
-            ] = LockdownLevelSchema.parse(newValue)
+            const [permType, locationOrCustomTool, protection, perm] = id.split('__')
+            if (permType === 'fileAccess') {
+              lockdownSettings.fileAccess[locationOrCustomTool as 'external' | 'internal'][
+                protection as 'protected' | 'unprotected'
+              ][perm as 'read' | 'write' | 'edit'] = LockdownLevelSchema.parse(newValue)
+            } else {
+              lockdownSettings.customTools[locationOrCustomTool as string] = LockdownLevelSchema.parse(newValue)
+            }
           },
           () => done(undefined), // On close
           { enableSearch: true }, // Optional: enable fuzzy search by label
