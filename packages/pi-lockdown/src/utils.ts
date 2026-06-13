@@ -74,11 +74,13 @@ export function loadSettings(ctx: ExtensionContext): LockdownSettings | null {
 
 export function constructSettingsList(lockdownSettings: LockdownSettings): SettingItem[] {
   const items: SettingItem[] = []
+
+  // File access
   for (const location of LOCATION) {
     for (const protection of PROTECTION) {
       for (const permAction of PERM_ACTION) {
-        const id = `${location}-${protection}-${permAction}`
-        const fullLabel = permAction === 'other' ? `${permAction} tool` : permAction
+        const id = `fileAccess-${location}-${protection}-${permAction}`
+        const fullLabel = permAction
         const titleCaseLabel = fullLabel[0]?.toUpperCase() + fullLabel.slice(1)
         const label = `${titleCaseLabel.padEnd(12, ' ')}>  ${location}  ${protection.padEnd(11, ' ')}`
         const currentValue = lockdownSettings.fileAccess[location][protection][permAction]
@@ -92,6 +94,20 @@ export function constructSettingsList(lockdownSettings: LockdownSettings): Setti
       }
     }
   }
+
+  // Custom tools
+  Object.keys(lockdownSettings.customTools).forEach((customTool) => {
+    const id = `customTool-${customTool}`
+    const label = customTool.padEnd(36, ' ')
+    const currentValue = lockdownSettings.customTools[customTool] ?? 'warn'
+
+    items.push({
+      id,
+      label,
+      currentValue,
+      values: lockdownLevelOptions,
+    })
+  })
 
   return items
 }
