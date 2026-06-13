@@ -8,3 +8,6 @@ packages/*/node_modules/
 **/.env.staging
 **/.env.production
 **/.env.local
+
+# Other
+**/.pi-eval
