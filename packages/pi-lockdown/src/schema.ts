@@ -9,8 +9,8 @@ export const DefaultToolsSchema = z.array(z.enum(defaultTools))
 
 export const LockdownSettingsSchema = z.object({
   defaultTools: DefaultToolsSchema.default([...defaultTools]),
-  customTools: z.array(z.string()).default([]),
   protectedPatterns: z.array(z.string()).default(['**/.env*', '**/.git/**', '**/node_modules/**']),
+  customTools: z.record(z.string(), LockdownLevelSchema).default({}),
   fileAccess: z.object({
     external: z.object({
       protected: z.object({
