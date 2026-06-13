@@ -3,7 +3,7 @@ import path from 'node:path'
 import { type ExtensionAPI, getSettingsListTheme, isToolCallEventType } from '@earendil-works/pi-coding-agent'
 import { Box, Container, SettingsList, Text } from '@earendil-works/pi-tui'
 
-import { type LockdownLevel,LockdownLevelSchema, LockdownSettingsSchema } from './schema'
+import { type LockdownLevel, LockdownLevelSchema, LockdownSettingsSchema } from './schema'
 import { constructSettingsList, isInside, loadSettings } from './utils'
 
 // Settings
@@ -160,10 +160,14 @@ export default function (pi: ExtensionAPI) {
           getSettingsListTheme(),
           (id, newValue) => {
             // Handle value change
-            const [location, protection, perm] = id.split('-')
-            lockdownSettings.fileAccess[location as 'external' | 'internal'][protection as 'protected' | 'unprotected'][
-              perm as 'read' | 'write' | 'edit'
-            ] = LockdownLevelSchema.parse(newValue)
+            const [permType, locationOrCustomTool, protection, perm] = id.split('-')
+            if (permType === 'fileAccess') {
+              lockdownSettings.fileAccess[locationOrCustomTool as 'external' | 'internal'][
+                protection as 'protected' | 'unprotected'
+              ][perm as 'read' | 'write' | 'edit'] = LockdownLevelSchema.parse(newValue)
+            } else {
+              lockdownSettings.customTools[locationOrCustomTool as string] = LockdownLevelSchema.parse(newValue)
+            }
           },
           () => done(undefined), // On close
           { enableSearch: true }, // Optional: enable fuzzy search by label
