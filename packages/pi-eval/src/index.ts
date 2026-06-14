@@ -15,19 +15,19 @@ export default function (pi: ExtensionAPI) {
       name: Type.String({
         description: 'Name of the eval to run.',
       }),
-      numIterations: Type.Integer({
-        description: 'Number of evaluations to run.',
+      numTrials: Type.Integer({
+        description: 'Number of eval trials to run.',
         default: 5,
       }),
     }),
 
     async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
       // Get eval name
-      const { name: evalName, numIterations } = params
+      const { name: evalName, numTrials: numTrials } = params
       const gradeResultFolder = `.pi-eval/${evalName}/grading`
       const evalResultFolder = `.pi-eval/${evalName}/results`
 
-      for (let iter = 0; iter < numIterations; iter++) {
+      for (let iter = 0; iter < numTrials; iter++) {
         const iterNum = (iter + 1).toString().padStart(4, '0')
 
         // Perform task
