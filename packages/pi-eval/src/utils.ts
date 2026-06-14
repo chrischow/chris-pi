@@ -1,7 +1,8 @@
-import { createReadStream } from 'fs'
+import { createReadStream, readFileSync, writeFileSync } from 'fs'
 import { mkdir, readdir, readFile, stat, writeFile } from 'fs/promises'
-import path from 'path'
+import path, { dirname, resolve } from 'path'
 import { createInterface } from 'readline'
+import { fileURLToPath } from 'url'
 
 import { type EvalResult, type GradeResult, GradeResultSchema, type SessionStats } from './schema'
 
@@ -191,4 +192,17 @@ export const computeEvalResult = async ({ folderPath }: { folderPath: string }):
     passAtK,
     passPowerK,
   }
+}
+
+export const generateEvalReport = ({ evalResult, folderPath }: { evalResult: EvalResult; folderPath: string }) => {
+  const __dirname = dirname(fileURLToPath(import.meta.url))
+  const htmlPath = resolve(__dirname, '..', 'assets', 'report.html')
+
+  const reportTemplate = readFileSync(htmlPath, 'utf-8')
+  const report = reportTemplate.replace(
+    `var INLINE_STATS = null`,
+    `var INLINE_STATS = ${JSON.stringify(evalResult, null, 2)}`,
+  )
+
+  writeFileSync(`${folderPath}/eval_report.html`, report, 'utf-8')
 }

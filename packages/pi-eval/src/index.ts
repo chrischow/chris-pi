@@ -1,8 +1,7 @@
 import { createAgentSession, type ExtensionAPI, SessionManager } from '@earendil-works/pi-coding-agent'
 import Type from 'typebox'
 
-import { EvalSettingsSchema } from './schema'
-import { computeEvalResult, computeSessionStats, saveFile } from './utils'
+import { computeEvalResult, computeSessionStats, generateEvalReport, saveFile } from './utils'
 
 export default function (pi: ExtensionAPI) {
   // const evalSettings = EvalSettingsSchema.parse({})
@@ -72,11 +71,15 @@ export default function (pi: ExtensionAPI) {
         filename: `result.json`,
       })
 
+      // Generate report
+      ctx.ui.notify(`Generating eval report...`)
+      generateEvalReport({ folderPath: evalResultFolder, evalResult })
+
       return {
         content: [
           {
             type: 'text',
-            text: `Completed eval successfully. Results have been saved to ${evalResultFolder}result.json.`,
+            text: `Completed eval successfully. Outputs have been saved to ${evalResultFolder}.`,
           },
         ],
         details: evalResult,
