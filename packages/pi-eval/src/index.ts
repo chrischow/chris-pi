@@ -32,7 +32,7 @@ export default function (pi: ExtensionAPI) {
         const iterNum = iter.toString().padStart(4, '0')
 
         // Perform task
-        ctx.ui.notify(`[Iteration ${iter + 1}] Performing task...`)
+        ctx.ui.notify(`[Iteration ${iter}] Performing task...`)
         const { session: taskSession } = await createAgentSession({ sessionManager: SessionManager.inMemory() })
         await taskSession.prompt(
           `Parse the "Task" section from the eval ${evalName}.md from the folder \`./evals\`. Execute the task.`,

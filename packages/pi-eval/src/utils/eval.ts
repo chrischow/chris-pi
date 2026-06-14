@@ -1,17 +1,11 @@
 import { createReadStream, readFileSync, writeFileSync } from 'fs'
-import { mkdir, readdir, readFile, stat, writeFile } from 'fs/promises'
+import { readdir, readFile, stat } from 'fs/promises'
 import path, { dirname, resolve } from 'path'
 import { createInterface } from 'readline'
 import { fileURLToPath } from 'url'
 
-import { type EvalResult, type GradeResult, GradeResultSchema, type SessionStats } from './schema'
-
-export const prepareDirectory = async ({ folderPath }: { folderPath: string }) => {
-  await mkdir(folderPath, { recursive: true }).catch((error) => {
-    console.error(error)
-    throw new Error(`Error creating folder: ${folderPath}`)
-  })
-}
+import { type EvalResult, type GradeResult, GradeResultSchema, type SessionStats } from '../schema'
+import { prepareDirectory } from './filesystem'
 
 export const getStartingTrialNum = async ({ gradeResultFolder }: { gradeResultFolder: string }): Promise<number> => {
   await prepareDirectory({ folderPath: gradeResultFolder })
@@ -128,23 +122,6 @@ export const computeSessionStats = async ({
     console.error(error)
     throw new Error('Could not compute session stats.', { cause: error })
   }
-}
-
-export const saveFile = async ({
-  data,
-  folderPath,
-  filename,
-}: {
-  data: object
-  folderPath: string
-  filename: string
-}): Promise<void> => {
-  await prepareDirectory({ folderPath })
-
-  await writeFile(`${folderPath}/${filename}`, JSON.stringify(data), 'utf8').catch((error) => {
-    console.error(error)
-    throw new Error('Error writing to file.')
-  })
 }
 
 export const calculatePassAtK = ({
