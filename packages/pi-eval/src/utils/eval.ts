@@ -1,19 +1,15 @@
 import { createReadStream, readFileSync, writeFileSync } from 'fs'
-import { readdir, readFile, stat } from 'fs/promises'
 import path, { dirname, resolve } from 'path'
 import { createInterface } from 'readline'
 import { fileURLToPath } from 'url'
 
 import { type EvalResult, type GradeResult, GradeResultSchema, type SessionStats } from '../schema'
-import { prepareDirectory } from './filesystem'
+import { getAllFilesInDirectory, prepareDirectory, readFileContent } from './filesystem'
 
 export const getStartingTrialNum = async ({ gradeResultFolder }: { gradeResultFolder: string }): Promise<number> => {
   await prepareDirectory({ folderPath: gradeResultFolder })
 
-  const filenames = await readdir(gradeResultFolder).catch((error) => {
-    console.error(error)
-    throw new Error('Could not read grading result directory.')
-  })
+  const filenames = await getAllFilesInDirectory({ folderPath: gradeResultFolder })
 
   let trialNum = 1
   if (filenames.length === 0) {
@@ -21,26 +17,13 @@ export const getStartingTrialNum = async ({ gradeResultFolder }: { gradeResultFo
   }
 
   for (const filename of filenames) {
-    if (path.extname(filename).toLowerCase() !== '.json') {
-      continue
-    }
-    const filepath = path.join(gradeResultFolder, filename)
-
-    // File check
-    const s = await stat(filepath).catch((error) => {
-      console.error(error)
-      throw new Error(`Could not determine if path is a folder or file: ${filepath}`)
-    })
-
-    if (!s.isFile()) {
-      continue
-    }
-
     // Parse data
-    const rawData = await readFile(filepath, 'utf8').catch((error) => {
-      console.error(error)
-      throw new Error(`Could not read file: ${filepath}`)
-    })
+    const filepath = path.join(gradeResultFolder, filename)
+    const rawData = await readFileContent({ filepath, ext: 'json' })
+
+    if (!rawData) {
+      throw new Error(`Could not read file: ${filename}`)
+    }
 
     try {
       const { success, data } = GradeResultSchema.safeParse(JSON.parse(rawData))
@@ -153,10 +136,7 @@ export const computeEvalResult = async ({
   name: string
   folderPath: string
 }): Promise<EvalResult> => {
-  const filenames = await readdir(folderPath).catch((error) => {
-    console.error(error)
-    throw new Error('Could not read grading result directory.')
-  })
+  const filenames = await getAllFilesInDirectory({ folderPath })
 
   // Initialise stats
   let totalTrials: number = 0
@@ -171,25 +151,13 @@ export const computeEvalResult = async ({
 
   // Loop through files
   for (const filename of filenames) {
-    if (path.extname(filename).toLowerCase() !== '.json') {
-      continue
-    }
-    const filepath = path.join(folderPath, filename)
-
-    // File check
-    const s = await stat(filepath).catch((error) => {
-      console.error(error)
-      throw new Error(`Could not determine if path is a folder or file: ${filepath}`)
-    })
-    if (!s.isFile()) {
-      continue
-    }
-
     // Parse data
-    const rawData = await readFile(filepath, 'utf8').catch((error) => {
-      console.error(error)
-      throw new Error(`Could not read file: ${filepath}`)
-    })
+    const filepath = path.join(folderPath, filename)
+    const rawData = await readFileContent({ filepath, ext: 'json' })
+
+    if (!rawData) {
+      throw new Error(`Could not read file: ${filename}`)
+    }
 
     let data: GradeResult
 
