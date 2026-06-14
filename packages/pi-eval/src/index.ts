@@ -1,7 +1,7 @@
 import { createAgentSession, type ExtensionAPI, SessionManager } from '@earendil-works/pi-coding-agent'
 import Type from 'typebox'
 
-import { computeEvalResult, computeSessionStats, generateEvalReport, saveFile } from './utils'
+import { computeEvalResult, computeSessionStats, generateEvalReport, getStartingTrialNum, saveFile } from './utils'
 
 export default function (pi: ExtensionAPI) {
   // const evalSettings = EvalSettingsSchema.parse({})
@@ -27,8 +27,9 @@ export default function (pi: ExtensionAPI) {
       const gradeResultFolder = `.pi-eval/${evalName}/grading`
       const evalResultFolder = `.pi-eval/${evalName}/results`
 
-      for (let iter = 0; iter < numTrials; iter++) {
-        const iterNum = (iter + 1).toString().padStart(4, '0')
+      const startingTrialNum = await getStartingTrialNum({ gradeResultFolder })
+      for (let iter = startingTrialNum; iter < startingTrialNum + numTrials; iter++) {
+        const iterNum = iter.toString().padStart(4, '0')
 
         // Perform task
         ctx.ui.notify(`[Iteration ${iter + 1}] Performing task...`)
@@ -40,7 +41,7 @@ export default function (pi: ExtensionAPI) {
         taskSession.dispose()
 
         // Compute session stats
-        const sessionStats = await computeSessionStats({ filepath: sessionLogsFilepath })
+        const sessionStats = await computeSessionStats({ trialNum: iter, filepath: sessionLogsFilepath })
 
         await saveFile({
           data: sessionStats,
@@ -49,7 +50,7 @@ export default function (pi: ExtensionAPI) {
         })
 
         // Grade task
-        ctx.ui.notify(`[Iteration ${iter + 1}] Grading task...`)
+        ctx.ui.notify(`[Iteration ${iter}] Grading task...`)
         const { session: gradeSession } = await createAgentSession({ sessionManager: SessionManager.inMemory() })
         await gradeSession.prompt(
           `Parse the "Task" and "Eval Checklist" sections from the file @evals/${evalName}.md. Read the Pi session log file located at @${sessionLogsFilepath}.

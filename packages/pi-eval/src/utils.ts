@@ -6,7 +6,70 @@ import { fileURLToPath } from 'url'
 
 import { type EvalResult, type GradeResult, GradeResultSchema, type SessionStats } from './schema'
 
-export const computeSessionStats = async ({ filepath }: { filepath: string }): Promise<SessionStats> => {
+export const prepareDirectory = async ({ folderPath }: { folderPath: string }) => {
+  await mkdir(folderPath, { recursive: true }).catch((error) => {
+    console.error(error)
+    throw new Error(`Error creating folder: ${folderPath}`)
+  })
+}
+
+export const getStartingTrialNum = async ({ gradeResultFolder }: { gradeResultFolder: string }): Promise<number> => {
+  await prepareDirectory({ folderPath: gradeResultFolder })
+
+  const filenames = await readdir(gradeResultFolder).catch((error) => {
+    console.error(error)
+    throw new Error('Could not read grading result directory.')
+  })
+
+  let trialNum = 1
+  if (filenames.length === 0) {
+    return trialNum
+  }
+
+  for (const filename of filenames) {
+    if (path.extname(filename).toLowerCase() !== '.json') {
+      continue
+    }
+    const filepath = path.join(gradeResultFolder, filename)
+
+    // File check
+    const s = await stat(filepath).catch((error) => {
+      console.error(error)
+      throw new Error(`Could not determine if path is a folder or file: ${filepath}`)
+    })
+
+    if (!s.isFile()) {
+      continue
+    }
+
+    // Parse data
+    const rawData = await readFile(filepath, 'utf8').catch((error) => {
+      console.error(error)
+      throw new Error(`Could not read file: ${filepath}`)
+    })
+
+    try {
+      const { success, data } = GradeResultSchema.safeParse(JSON.parse(rawData))
+      if (!success) {
+        throw new Error(`Grade file data does not match schema: ${filepath}`)
+      }
+      trialNum = Math.max(trialNum, data.trialNum)
+    } catch (error) {
+      console.error(error)
+      throw new Error(`Could not parse grade file: ${filepath}`, { cause: error })
+    }
+  }
+
+  return trialNum + 1
+}
+
+export const computeSessionStats = async ({
+  trialNum,
+  filepath,
+}: {
+  trialNum: number
+  filepath: string
+}): Promise<SessionStats> => {
   let numInputTokens = 0
   let numOutputTokens = 0
   let numTurns = 0
@@ -55,6 +118,7 @@ export const computeSessionStats = async ({ filepath }: { filepath: string }): P
     }
 
     return {
+      trialNum,
       numInputTokens,
       numOutputTokens,
       numTurns,
@@ -75,10 +139,7 @@ export const saveFile = async ({
   folderPath: string
   filename: string
 }): Promise<void> => {
-  await mkdir(folderPath, { recursive: true }).catch((error) => {
-    console.error(error)
-    throw new Error('Error creating folder.')
-  })
+  await prepareDirectory({ folderPath })
 
   await writeFile(`${folderPath}/${filename}`, JSON.stringify(data), 'utf8').catch((error) => {
     console.error(error)

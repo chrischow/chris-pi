@@ -5,6 +5,7 @@ export const EvalSettingsSchema = z.object({
 })
 
 export const SessionStatsSchema = z.object({
+  trialNum: z.number(),
   numToolCalls: z.number(),
   numTurns: z.number(),
   numInputTokens: z.number(),
