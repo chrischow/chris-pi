@@ -22,7 +22,7 @@ export const getStartingTrialNum = async ({ gradeResultFolder }: { gradeResultFo
     const rawData = await readFileContent({ filepath, ext: 'json' })
 
     if (!rawData) {
-      throw new Error(`Could not read file: ${filename}`)
+      continue
     }
 
     try {
@@ -156,7 +156,7 @@ export const computeEvalResult = async ({
     const rawData = await readFileContent({ filepath, ext: 'json' })
 
     if (!rawData) {
-      throw new Error(`Could not read file: ${filename}`)
+      continue
     }
 
     let data: GradeResult

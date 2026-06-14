@@ -42,17 +42,17 @@ export const readFileContent = async ({ filepath, ext }: { filepath: string; ext
   // File check
   const s = await stat(filepath).catch((error) => {
     console.error(error)
-    return null
+    throw new Error(`Could not determine if path is a folder or file: ${filepath}`)
   })
 
-  if (!s || !s.isFile()) {
+  if (!s.isFile()) {
     return null
   }
 
   // Parse data
   const rawData = await readFile(filepath, 'utf8').catch((error) => {
     console.error(error)
-    return null
+    throw new Error(`Could not read file: ${filepath}`)
   })
 
   return rawData
