@@ -108,7 +108,13 @@ export const calculatePassAtK = ({
   return 1.0 - product
 }
 
-export const computeEvalResult = async ({ folderPath }: { folderPath: string }): Promise<EvalResult> => {
+export const computeEvalResult = async ({
+  name,
+  folderPath,
+}: {
+  name: string
+  folderPath: string
+}): Promise<EvalResult> => {
   const filenames = await readdir(folderPath).catch((error) => {
     console.error(error)
     throw new Error('Could not read grading result directory.')
@@ -181,6 +187,7 @@ export const computeEvalResult = async ({ folderPath }: { folderPath: string }):
   }
 
   return {
+    name,
     totalTrials,
     totalCorrectTrials,
     passRate,

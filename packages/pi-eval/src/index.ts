@@ -64,7 +64,7 @@ export default function (pi: ExtensionAPI) {
 
       // Consolidate stats
       ctx.ui.notify(`Consolidating eval results...`)
-      const evalResult = await computeEvalResult({ folderPath: gradeResultFolder })
+      const evalResult = await computeEvalResult({ name: evalName, folderPath: gradeResultFolder })
       await saveFile({
         data: evalResult,
         folderPath: evalResultFolder,

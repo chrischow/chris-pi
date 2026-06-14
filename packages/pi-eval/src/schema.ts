@@ -18,6 +18,7 @@ export const GradeResultSchema = SessionStatsSchema.extend({
 export type GradeResult = z.infer<typeof GradeResultSchema>
 
 export const EvalResultSchema = z.object({
+  name: z.string(),
   totalTrials: z.number(),
   totalCorrectTrials: z.number(),
   passRate: z.number(),
