@@ -419,7 +419,8 @@
     headerBar.className = 'header-bar';
     headerBar.innerHTML = `
       <div class="brand">
-        <h1>Eval Results</h1>
+        <h1>Eval Results: <span style="font-family: monospace; color: var(--accent-green)">${stats.name}</span></h1>
+        <div class="subtitle">Generated with <span style="font-family: monospace;">@chrischow/pi-eval</span></div>
       </div>
       <button class="upload-btn" id="uploadBtn2">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
