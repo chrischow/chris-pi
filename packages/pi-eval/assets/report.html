@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Eval Results Report</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg-primary: #12111a;
+    --bg-secondary: #161420;
+    --bg-card: #161420;
+    --bg-card-hover: #1d1a2b;
+    --border: #2a273a;
+    --text-primary: #efeff1;
+    --text-secondary: #868690;
+    --text-muted: #5c5c5f;
+    --accent-blue: #5e6ad2;
+    --accent-green: #4bce97;
+    --accent-yellow: #f5cd47;
+    --accent-cyan: #06b6d4;
+    --accent-rose: #f87171;
+    --accent-purple: #a855f7;
+    --accent-orange: #f97316;
+    --shadow: 0 1px 2px rgba(0,0,0,0.5), 0 1px 1px rgba(0,0,0,0.4);
+    --shadow-lg: 0 4px 12px rgba(0,0,0,0.55);
+    --radius: 10px;
+    --radius-sm: 6px;
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", "SF Pro", Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 32px 24px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .container {
+    max-width: 1100px;
+    width: 100%;
+  }
+
+  /* No separate .header needed — using .header-bar instead */
+
+  /* Grid rows */
+  .row {
+    display: grid;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .row-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .row-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Cards */
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: var(--shadow);
+    transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .card:hover {
+    background: var(--bg-card-hover);
+    border-color: #3b3852;
+    box-shadow: var(--shadow-lg);
+  }
+
+  /* Stat card (top row) */
+  .stat-card {
+    display: flex;
+    flex-direction: column;
+  }
+  .stat-card .stat-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+  }
+  .stat-card .stat-value {
+    font-size: 32px;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+  }
+  .stat-card .stat-value.color-green {
+    color: var(--accent-green);
+  }
+  .stat-card .stat-value.color-yellow {
+    color: var(--accent-yellow);
+  }
+  .stat-card .stat-value.color-rose {
+    color: var(--accent-rose);
+  }
+  .stat-card .stat-sub {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  /* Chart card */
+  .chart-card {
+    display: flex;
+    flex-direction: column;
+  }
+  .chart-card .chart-header {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .chart-card .chart-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+  }
+  .chart-card .chart-median {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted);
+  }
+  .chart-card .chart-wrapper {
+    position: relative;
+    width: 100%;
+    /* aspect-ratio is set via inline style per card type */
+  }
+  .chart-card canvas {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    body { padding: 16px 12px; }
+    .row-4 { grid-template-columns: repeat(2, 1fr); }
+    .row-2 { grid-template-columns: 1fr; }
+    .stat-card .stat-value { font-size: 26px; }
+  }
+  @media (max-width: 480px) {
+    .row-4 { grid-template-columns: 1fr; }
+  }
+
+  /* Header bar with upload button */
+  .header-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 32px;
+  }
+  .header-bar .brand h1 {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+  }
+  .header-bar .brand .subtitle {
+    font-size: 14px;
+    color: var(--text-secondary);
+    font-weight: 400;
+  }
+
+  /* Upload button */
+  .upload-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 500;
+    font-family: var(--font-sans);
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    white-space: nowrap;
+  }
+  .upload-btn:hover {
+    background: var(--bg-card-hover);
+    border-color: #3b3852;
+    color: var(--text-primary);
+  }
+  .upload-btn svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+  }
+  .upload-btn input[type="file"] {
+    display: none;
+  }
+
+  /* Hide the raw file input outside the container */
+  #fileInput {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* Drag-over state */
+  body.drag-over {
+    outline: 2px dashed var(--accent-blue);
+    outline-offset: -12px;
+  }
+  body.drag-over .upload-btn {
+    border-color: var(--accent-blue);
+    color: var(--accent-blue);
+  }
+
+  /* Loading / error / empty state */
+  .state-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    gap: 16px;
+  }
+  .state-container .empty-icon {
+    width: 48px;
+    height: 48px;
+    color: var(--text-muted);
+    opacity: 0.4;
+  }
+  .state-container .empty-text {
+    color: var(--text-muted);
+    font-size: 15px;
+    text-align: center;
+    line-height: 1.5;
+  }
+  .state-container .empty-text strong {
+    color: var(--text-secondary);
+  }
+  .loading {
+    color: var(--text-muted);
+    font-size: 15px;
+  }
+  .error {
+    color: var(--accent-rose);
+    font-size: 14px;
+    text-align: center;
+    padding: 40px 20px;
+  }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<input type="file" id="fileInput" accept=".json" />
+<div class="container" id="app">
+  <!-- Empty state shown when no data loaded -->
+  <div class="state-container" id="emptyState">
+    <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+      <polyline points="14 2 14 8 20 8"/>
+      <line x1="12" y1="18" x2="12" y2="12"/>
+      <line x1="9" y1="15" x2="15" y2="15"/>
+    </svg>
+    <div class="empty-text">
+      <strong>Upload a result.json</strong> file to view the eval report.<br>
+      Drag &amp; drop or click anywhere to browse.
+    </div>
+  </div>
+  <div class="loading hidden" id="loading">Loading...</div>
+  <div class="error hidden" id="error"></div>
+  <div class="report-content hidden" id="reportContent"></div>
+</div>
+
+<script>
+(function() {
+  // ----- SKILL INJECTION POINT -----
+  // The skill should replace this line with the actual stats JSON object.
+  // Example: var INLINE_STATS = {"totalTrials":5,"passRate":1.0,...};
+  var INLINE_STATS = null;
+  // ----- END SKILL INJECTION POINT -----
+
+  if (INLINE_STATS) {
+    document.getElementById('emptyState').classList.add('hidden');
+    document.getElementById('loading').classList.remove('hidden');
+    setTimeout(() => build(INLINE_STATS), 100);
+    return;
+  }
+
+  // ---- URL DATA PARAM (base64-encoded JSON via ?data=) ----
+  (function initFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const encoded = params.get('data');
+    if (encoded) {
+      try {
+        const stats = JSON.parse(atob(encoded));
+        document.getElementById('emptyState').classList.add('hidden');
+        document.getElementById('loading').classList.remove('hidden');
+        setTimeout(() => build(stats), 100);
+      } catch (err) {
+        document.getElementById('emptyState').classList.add('hidden');
+        const el = document.getElementById('error');
+        el.textContent = 'Invalid data parameter: ' + err.message;
+        el.classList.remove('hidden');
+      }
+    }
+  })();
+
+  // ---- FILE UPLOAD HANDLING ----
+  const fileInput = document.getElementById('fileInput');
+
+  // Also allow clicking the empty state container to trigger upload
+  document.getElementById('emptyState').addEventListener('click', function() {
+    fileInput.click();
+  });
+
+  function handleFile(file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const text = e.target.result;
+      try {
+        const stats = JSON.parse(text);
+        document.getElementById('emptyState').classList.add('hidden');
+        document.getElementById('error').classList.add('hidden');
+        document.getElementById('loading').classList.remove('hidden');
+        // Small delay so loading flash shows
+        setTimeout(() => build(stats), 100);
+      } catch (err) {
+        document.getElementById('emptyState').classList.add('hidden');
+        document.getElementById('loading').classList.add('hidden');
+        const el = document.getElementById('error');
+        el.textContent = 'Invalid JSON: ' + err.message;
+        el.classList.remove('hidden');
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  fileInput.addEventListener('change', function() {
+    if (fileInput.files && fileInput.files.length > 0) {
+      handleFile(fileInput.files[0]);
+    }
+  });
+
+  // Drag and drop on the body
+  let dragCounter = 0;
+  document.body.addEventListener('dragenter', function(e) {
+    e.preventDefault();
+    dragCounter++;
+    document.body.classList.add('drag-over');
+  });
+  document.body.addEventListener('dragleave', function(e) {
+    e.preventDefault();
+    dragCounter--;
+    if (dragCounter === 0) {
+      document.body.classList.remove('drag-over');
+    }
+  });
+  document.body.addEventListener('dragover', function(e) {
+    e.preventDefault();
+  });
+  document.body.addEventListener('drop', function(e) {
+    e.preventDefault();
+    dragCounter = 0;
+    document.body.classList.remove('drag-over');
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleFile(e.dataTransfer.files[0]);
+    }
+  });
+
+  // ---- HELPERS ----
+  function median(arr) {
+    if (!arr || arr.length === 0) return 0;
+    const sorted = [...arr].sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
+    if (sorted.length % 2 === 0) {
+      return (sorted[mid - 1] + sorted[mid]) / 2;
+    }
+    return sorted[mid];
+  }
+
+  function fmtNum(n) {
+    return Number(n).toLocaleString();
+  }
+
+  function fmtPct(n) {
+    return (n * 100).toFixed(1) + '%';
+  }
+
+  // ---- BUILD REPORT ----
+  function build(stats) {
+    const root = document.getElementById('reportContent');
+    root.innerHTML = '';
+
+    // Header bar with upload button
+    const headerBar = document.createElement('div');
+    headerBar.className = 'header-bar';
+    headerBar.innerHTML = `
+      <div class="brand">
+        <h1>Eval Results</h1>
+        <div class="subtitle">verify-terraform-version</div>
+      </div>
+      <button class="upload-btn" id="uploadBtn2">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        Upload JSON
+      </button>
+    `;
+    root.appendChild(headerBar);
+
+    // Wire up the second upload button
+    document.getElementById('uploadBtn2').addEventListener('click', function() {
+      document.getElementById('fileInput').click();
+    });
+
+    // ---- Row 1: Stats ----
+    const row1 = document.createElement('div');
+    row1.className = 'row row-4';
+
+    function valueColor(val) {
+      if (val >= 0.8) return 'color-green';
+      if (val >= 0.5) return 'color-yellow';
+      return 'color-rose';
+    }
+
+    const statCards = [
+      { label: 'Total Trials', value: fmtNum(stats.totalTrials), cls: '' },
+      { label: 'Correct Trials', value: fmtNum(stats.totalCorrectTrials), cls: '' },
+      { label: 'Pass Rate', value: fmtPct(stats.passRate), cls: valueColor(stats.passRate) },
+      { label: 'Avg Completion', value: fmtPct(stats.averageCompletionPercentage), cls: valueColor(stats.averageCompletionPercentage) },
+    ];
+
+    statCards.forEach(s => {
+      const card = document.createElement('div');
+      card.className = 'card stat-card';
+      card.innerHTML = `
+        <span class="stat-label">${s.label}</span>
+        <span class="stat-value ${s.cls}">${s.value}</span>
+      `;
+      row1.appendChild(card);
+    });
+    root.appendChild(row1);
+
+    // ---- Row 2: passAtK, passPowerK (line charts) ----
+    const row2 = document.createElement('div');
+    row2.className = 'row row-2';
+
+    appendLineChartCard(row2, 'Pass@K', 'passAtK', stats.passAtK, '#5e6ad2');
+    appendLineChartCard(row2, 'PassPower@K', 'passPowerK', stats.passPowerK, '#5e6ad2');
+
+    root.appendChild(row2);
+
+    // ---- Row 3: numInputTokens, numOutputTokens (histograms) ----
+    const row3 = document.createElement('div');
+    row3.className = 'row row-2';
+
+    appendHistogramCard(row3, 'No. of Input Tokens', 'numInputTokens', stats.numInputTokens, '#5e6ad2');
+    appendHistogramCard(row3, 'No. of Output Tokens', 'numOutputTokens', stats.numOutputTokens, '#5e6ad2');
+
+    root.appendChild(row3);
+
+    // ---- Row 4: numToolCalls, numTurns (histograms) ----
+    const row4 = document.createElement('div');
+    row4.className = 'row row-2';
+
+    appendHistogramCard(row4, 'No. of Tool Calls', 'numToolCalls', stats.numToolCalls, '#5e6ad2');
+    appendHistogramCard(row4, 'No. of Turns', 'numTurns', stats.numTurns, '#5e6ad2');
+
+    root.appendChild(row4);
+
+    // ---- Hide loading ----
+    document.getElementById('loading').classList.add('hidden');
+    root.classList.remove('hidden');
+  }
+
+  function appendLineChartCard(row, title, key, data, color) {
+    const card = document.createElement('div');
+    card.className = 'card chart-card';
+
+    const headerDiv = document.createElement('div');
+    headerDiv.className = 'chart-header';
+    headerDiv.innerHTML = `<span class="chart-title">${title}</span>`;
+    card.appendChild(headerDiv);
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'chart-wrapper';
+    wrapper.style.aspectRatio = '2 / 1';
+    wrapper.style.maxHeight = '200px';
+    const canvas = document.createElement('canvas');
+    wrapper.appendChild(canvas);
+    card.appendChild(wrapper);
+    row.appendChild(card);
+
+    // Render chart after DOM append
+    requestAnimationFrame(() => {
+      const ctx = canvas.getContext('2d');
+      const labels = data.map((_, i) => `#${i + 1}`);
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: title,
+            data: data,
+            borderColor: color,
+            backgroundColor: color + '18',
+            borderWidth: 2,
+            pointBackgroundColor: color,
+            pointBorderColor: color,
+            pointRadius: 3,
+            pointHoverRadius: 5,
+            fill: true,
+            tension: 0.2,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#1a1a1d',
+              titleColor: '#efeff1',
+              bodyColor: '#868690',
+              borderColor: '#232326',
+              borderWidth: 1,
+              cornerRadius: 6,
+              padding: 8,
+              displayColors: false,
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: '#1f1f23', drawBorder: false },
+              ticks: { color: '#5c5c5f', font: { size: 11 } }
+            },
+            y: {
+              beginAtZero: true,
+              grid: { color: '#1f1f23', drawBorder: false },
+              ticks: { color: '#5c5c5f', font: { size: 11 }, maxTicksLimit: 6 }
+            }
+          },
+          interaction: {
+            intersect: false,
+            mode: 'index'
+          }
+        }
+      });
+    });
+  }
+
+  // Build histogram bins from raw data
+  function buildHistogram(data, numBins) {
+    if (data.length === 0) return { bins: [], counts: [] };
+    const sorted = [...data].sort((a, b) => a - b);
+    const min = sorted[0];
+    const max = sorted[sorted.length - 1];
+    if (min === max) {
+      // All values identical: single bin
+      return { bins: [fmtNum(min)], counts: [data.length] };
+    }
+    const binWidth = (max - min) / numBins;
+    const bins = [];
+    for (let i = 0; i < numBins; i++) {
+      const lo = min + i * binWidth;
+      bins.push(lo);
+    }
+    const counts = new Array(numBins).fill(0);
+    for (const v of data) {
+      let idx = Math.floor((v - min) / binWidth);
+      if (idx >= numBins) idx = numBins - 1;
+      counts[idx]++;
+    }
+    return { bins, counts };
+  }
+
+  function appendHistogramCard(row, title, key, data, color) {
+    const med = median(data);
+    const card = document.createElement('div');
+    card.className = 'card chart-card';
+
+    const headerDiv = document.createElement('div');
+    headerDiv.className = 'chart-header';
+    headerDiv.innerHTML = `
+      <span class="chart-title">${title}</span>
+      <span class="chart-median">Median: ${fmtNum(med)}</span>
+    `;
+    card.appendChild(headerDiv);
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'chart-wrapper';
+    wrapper.style.aspectRatio = '2 / 1';
+    wrapper.style.maxHeight = '200px';
+    const canvas = document.createElement('canvas');
+    wrapper.appendChild(canvas);
+    card.appendChild(wrapper);
+    row.appendChild(card);
+
+    // Render chart after DOM append
+    requestAnimationFrame(() => {
+      const ctx = canvas.getContext('2d');
+      const numBins = Math.min(10, Math.max(4, Math.ceil(Math.sqrt(data.length))));
+      const hist = buildHistogram(data, numBins);
+
+      // Build labels like "5512-5513", "5513-5514" etc.
+      const labels = hist.bins.map((b, i) => {
+        const next = i < hist.bins.length - 1 ? hist.bins[i + 1] : b;
+        return fmtNum(Math.round(b)) + '-' + fmtNum(Math.round(next));
+      });
+
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Frequency',
+            data: hist.counts,
+            backgroundColor: color + '66',
+            borderColor: color,
+            borderWidth: 1,
+            borderRadius: 3,
+            barPercentage: 0.75,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#1a1a1d',
+              titleColor: '#efeff1',
+              bodyColor: '#868690',
+              borderColor: '#232326',
+              borderWidth: 1,
+              cornerRadius: 6,
+              padding: 8,
+              displayColors: false,
+              callbacks: {
+                title: function(items) {
+                  return items[0].label;
+                },
+                label: function(item) {
+                  return 'Frequency: ' + item.raw;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { color: '#5c5c5f', font: { size: 10 }, maxRotation: 45 }
+            },
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: 'Count',
+                color: '#5c5c5f',
+                font: { size: 11 }
+              },
+              grid: { color: '#1f1f23', drawBorder: false },
+              ticks: { color: '#5c5c5f', font: { size: 11 }, maxTicksLimit: 6, precision: 0 }
+            }
+          },
+          interaction: {
+            intersect: false,
+            mode: 'index'
+          }
+        }
+      });
+    });
+  }
+
+})();
+</script>
+</body>
+</html>
