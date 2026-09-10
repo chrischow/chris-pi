@@ -6,80 +6,74 @@
  * Displays the count in Pi's bottom bar via ctx.ui.setStatus().
  */
 
-import type { AssistantMessage } from "@earendil-works/pi-ai";
-import type {
-  ExtensionAPI,
-  SessionStartEvent,
-} from "@earendil-works/pi-coding-agent";
-import fs from "node:fs";
-import path from "node:path";
+import fs from 'node:fs'
+import path from 'node:path'
+
+import type { AssistantMessage } from '@earendil-works/pi-ai'
+import type { ExtensionAPI, SessionStartEvent } from '@earendil-works/pi-coding-agent'
 
 interface TokenStats {
-  totalInput: number;
-  totalOutput: number;
+  totalInput: number
+  totalOutput: number
 }
 
-const STATS_FILE = path.join(process.env.HOME || "", ".pi", "token-stats.json");
+const STATS_FILE = path.join(process.env.HOME || '', '.pi', 'token-stats.json')
 
 function readStats(): TokenStats {
   try {
-    const raw = fs.readFileSync(STATS_FILE, "utf-8");
-    return JSON.parse(raw);
-  } catch (_e) {
-    return { totalInput: 0, totalOutput: 0 };
+    const raw = fs.readFileSync(STATS_FILE, 'utf-8')
+    return JSON.parse(raw)
+  } catch {
+    return { totalInput: 0, totalOutput: 0 }
   }
 }
 
 function writeStats(stats: TokenStats): void {
   try {
-    fs.writeFileSync(STATS_FILE, JSON.stringify(stats));
-  } catch (_e) {
+    fs.writeFileSync(STATS_FILE, JSON.stringify(stats))
+  } catch {
     // Silently ignore — stats are best-effort
   }
 }
 
 const fmt = (n: number): string => {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`;
-  return String(n);
-};
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`
+  return String(n)
+}
 
 export default function (pi: ExtensionAPI) {
-  pi.on("session_start", (_event: SessionStartEvent, ctx) => {
-    const stats = readStats();
+  pi.on('session_start', (_event: SessionStartEvent, ctx) => {
+    const stats = readStats()
     ctx.ui.setStatus(
-      "token-counter",
-      ctx.ui.theme.fg(
-        "dim",
-        `Global: ↑${fmt(stats.totalInput)} ↓${fmt(stats.totalOutput)}`,
-      ),
-    );
-  });
+      'token-counter',
+      ctx.ui.theme.fg('dim', `Global: ↑${fmt(stats.totalInput)} ↓${fmt(stats.totalOutput)}`),
+    )
+  })
 
-  pi.on("agent_end", (event, ctx) => {
-    const stats = readStats();
+  pi.on('agent_end', (event, ctx) => {
+    const stats = readStats()
 
-    let input = 0;
-    let output = 0;
+    let input = 0
+    let output = 0
     for (const msg of event.messages) {
-      if (msg.role === "assistant") {
-        const m = msg as AssistantMessage;
-        input += m.usage.input || 0;
-        output += m.usage.output || 0;
+      if (msg.role === 'assistant') {
+        const m = msg as AssistantMessage
+        input += m.usage.input || 0
+        output += m.usage.output || 0
+        input += m.usage.cacheRead || 0
+        output += m.usage.cacheWrite || 0
       }
     }
 
-    stats.totalInput += input;
-    stats.totalOutput += output;
+    stats.totalInput += input
+    stats.totalOutput += output
 
-    writeStats(stats);
+    writeStats(stats)
 
     ctx.ui.setStatus(
-      "token-counter",
-      ctx.ui.theme.fg(
-        "dim",
-        `Global: ↑${fmt(stats.totalInput)} ↓${fmt(stats.totalOutput)}`,
-      ),
-    );
-  });
+      'token-counter',
+      ctx.ui.theme.fg('dim', `Global: ↑${fmt(stats.totalInput)} ↓${fmt(stats.totalOutput)}`),
+    )
+  })
 }
