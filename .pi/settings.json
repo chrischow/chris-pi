@@ -1,0 +1,113 @@
+{
+  "packages": [
+    "npm:@chrischow/pi-lockdown",
+    "npm:@plannotator/pi-extension"
+  ],
+  "lockdown": {
+    "customTools": {
+      "current_date": "allow",
+      "run_npm_script": "warn",
+      "git_staged_changes": "warn",
+      "shadcn_search": "warn",
+      "shadcn_docs": "warn",
+      "fetch_url": "warn",
+      "nest_generate": "warn",
+      "subagent_task": "allow"
+    },
+    "defaultTools": [
+      "read",
+      "edit",
+      "write",
+      "grep",
+      "find",
+      "ls"
+    ],
+    "protectedPatterns": [
+      "**/.env*",
+      "**/.git/**",
+      "**/node_modules/**"
+    ],
+    "fileAccess": {
+      "external": {
+        "protected": {
+          "read": "block",
+          "write": "block",
+          "edit": "block",
+          "other": "block"
+        },
+        "unprotected": {
+          "read": "warn",
+          "write": "block",
+          "edit": "block",
+          "other": "block"
+        }
+      },
+      "internal": {
+        "protected": {
+          "read": "warn",
+          "write": "warn",
+          "edit": "warn",
+          "other": "warn"
+        },
+        "unprotected": {
+          "read": "allow",
+          "write": "warn",
+          "edit": "warn",
+          "other": "warn"
+        }
+      }
+    }
+  },
+  "lockdownSubagent": {
+    "customTools": {
+      "current_date": "allow",
+      "run_npm_script": "block",
+      "git_staged_changes": "allow",
+      "shadcn_search": "allow",
+      "shadcn_docs": "allow",
+      "fetch_url": "allow",
+      "nest_generate": "block",
+      "subagent_task": "block"
+    },
+    "defaultTools": [
+      "read",
+      "grep",
+      "find",
+      "ls"
+    ],
+    "protectedPatterns": [
+      "**/.env*",
+      "**/.git/**"
+    ],
+    "fileAccess": {
+      "external": {
+        "protected": {
+          "read": "block",
+          "write": "block",
+          "edit": "block",
+          "other": "block"
+        },
+        "unprotected": {
+          "read": "allow",
+          "write": "block",
+          "edit": "block",
+          "other": "block"
+        }
+      },
+      "internal": {
+        "protected": {
+          "read": "allow",
+          "write": "warn",
+          "edit": "warn",
+          "other": "warn"
+        },
+        "unprotected": {
+          "read": "allow",
+          "write": "warn",
+          "edit": "warn",
+          "other": "warn"
+        }
+      }
+    }
+  }
+}
