@@ -1,0 +1,8 @@
+{
+  "name": "pi-extensions",
+  "private": true,
+  "dependencies": {
+    "@chrischow/pi-lockdown": "^0.3.0",
+    "@plannotator/pi-extension": "^0.27.14"
+  }
+}
