@@ -36,6 +36,7 @@ Lockdown also blocks empty writes (`write` with empty content) as a safeguard ag
 ## Configuration
 Add a `lockdown` property in your project or global `settings.json`. The order of hierarchy that Lockdown respects is: (1) project, (2) global, then (3) defaults (see below). Lockdown **does not** merge project and global settings. For example, if a `lockdown` config exists in **both** the project and global `settings.json` files, only the properties in the **project** will be applied on top of the defaults, and none of the configs in the global `settings.json` will be applied.
 
+
 Mandatory properties:
 - `customTools`: You must add the permissions for all custom tools and tools from other extensions here. Otherwise, Lockdown will not load them into your session.
 
@@ -95,3 +96,75 @@ Default protected patterns:
 **/.git/**
 **/node_modules/**
 ```
+
+
+### Subagent Profile
+Subagent processes (spawned `pi` processes running in headless `--mode json`) read a **separate** permission set under `lockdownSubagent`, same shape as `lockdown`. This lets you grant/deny subagents a different set of permissions than the main agent.
+
+A process is treated as a subagent when it was started with the `--lockdown-subagent` flag or the `PI_LOCKDOWN_SUBAGENT=1` environment variable. The main agent never sets either, so it always uses `lockdown`.
+
+Resolution order for a **subagent** process: (1) project `lockdownSubagent`, (2) global `lockdownSubagent`, (3) project `lockdown`, (4) global `lockdown`, then (5) defaults. If no `lockdownSubagent` key exists anywhere, subagents fall back to `lockdown`.
+
+```json
+{
+  "lockdown": {
+    "customTools": {
+      "custom-tool-name": "<allow|warn|block>"
+    },
+    "tools": ["read", "edit", "write", "grep", "find", "ls"],
+    "fileAccess": {
+      "external": {
+        "protected": {
+          "read": "block",
+          "write": "block",
+          "edit": "block",
+          "other": "block"
+        },
+        "unprotected": {
+          "read": "warn",
+          "write": "block",
+          "edit": "block",
+          "other": "block"
+        }
+      },
+      "internal": {
+        "protected": {
+          "read": "warn",
+          "write": "warn",
+          "edit": "warn",
+          "other": "warn"
+        },
+        "unprotected": {
+          "read": "allow",
+          "write": "warn",
+          "edit": "warn",
+          "other": "warn"
+        }
+      }
+    }
+  },
+  "lockdownSubagent": {
+    "customTools": {},
+    "tools": ["read", "grep", "find", "ls"],
+    "fileAccess": {
+      "internal": {
+        "unprotected": {
+          "write": "block",
+          "edit": "block"
+        }
+      }
+    }
+  }
+}
+```
+
+**Spawner contract:** when a future subagent extension spawns child `pi` processes, it must add `--lockdown-subagent` to the child's arguments — and **only** for subagent processes, never for the main agent. Example:
+
+```ts
+const args: string[] = ['--mode', 'json', '-p', '--no-session']
+args.push('--lockdown-subagent') // always, for every spawned subagent
+```
+
+Requires pi-lockdown to be installed globally (`~/.pi/agent/extensions` or via a pi package) so it loads inside the spawned processes.
+
+**Headless behavior:** `warn`-level permissions prompt for confirmation in interactive sessions. In headless sessions (no UI, e.g. subagents in `--mode json`) the confirmation cannot be shown, so `warn` is treated as `block` (fail-closed).

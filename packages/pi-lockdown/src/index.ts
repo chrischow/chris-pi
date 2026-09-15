@@ -3,6 +3,7 @@ import path from 'node:path'
 import { type ExtensionAPI, getSettingsListTheme, isToolCallEventType } from '@earendil-works/pi-coding-agent'
 import { Box, Container, SettingsList, Text } from '@earendil-works/pi-tui'
 
+import { SUBAGENT_FLAG } from './constants'
 import { type LockdownLevel, LockdownLevelSchema, LockdownSettingsSchema } from './schema'
 import { constructSettingsList, isInside, loadSettings } from './utils'
 
@@ -14,14 +15,24 @@ let lockdownSettings = LockdownSettingsSchema.parse({
   },
 })
 
+function isSubagentProcess(pi: ExtensionAPI): boolean {
+  return pi.getFlag(SUBAGENT_FLAG) === true || process.env.PI_LOCKDOWN_SUBAGENT === '1'
+}
+
 /**
  * Lockdown: A Pi extension to add security constraints to agents' tool usage.
  */
 export default function (pi: ExtensionAPI) {
+  pi.registerFlag(SUBAGENT_FLAG, {
+    description: 'Run with the lockdownSubagent permission profile (for subagent processes).',
+    type: 'boolean',
+    default: false,
+  })
+
   // Set allowed tools
   pi.on('session_start', (_, ctx) => {
     // Load settings
-    const loadedSettings = loadSettings(ctx)
+    const loadedSettings = loadSettings(ctx, isSubagentProcess(pi))
     if (!loadedSettings) {
       ctx.ui.notify('Could not load settings.', 'error')
       ctx.shutdown()
@@ -100,6 +111,15 @@ export default function (pi: ExtensionAPI) {
           reason: `[LOCKDOWN] Not allowed to perform action:\n\n${event.toolName}: ${inputPath}.`,
         }
       case 'warn': {
+        if (!ctx.hasUI) {
+          // Headless (e.g. subagents in JSON mode): no way to confirm the
+          // action, so fail closed and block.
+          return {
+            block: true,
+            reason: `[LOCKDOWN] Not allowed to perform action:\n\n${event.toolName}: ${inputPath}.`,
+          }
+        }
+
         const choice = await ctx.ui.select(
           `[LOCKDOWN]\n⚠️ Allow agent to perform action?\n\n${event.toolName}: ${inputPath}`,
           ['Yes', 'No'],
@@ -122,7 +142,7 @@ export default function (pi: ExtensionAPI) {
   pi.registerCommand('lockdown:reset', {
     description: 'Reset permissions to those specified in settings.json and/or defaults.',
     handler: async (_, ctx) => {
-      const loadedSettings = loadSettings(ctx)
+      const loadedSettings = loadSettings(ctx, isSubagentProcess(pi))
       if (!loadedSettings) {
         ctx.ui.notify('Could not update permissions.', 'error')
         ctx.shutdown()

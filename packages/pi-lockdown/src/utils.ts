@@ -3,7 +3,14 @@ import path from 'node:path'
 import { type ExtensionContext, SettingsManager } from '@earendil-works/pi-coding-agent'
 import type { SettingItem } from '@earendil-works/pi-tui'
 
-import { LOCATION, PERM_ACTION, PROTECTION, SETTING_ID_SEPARATOR } from './constants'
+import {
+  LOCATION,
+  PERM_ACTION,
+  PROTECTION,
+  SETTING_ID_SEPARATOR,
+  SETTINGS_KEY,
+  SUBAGENT_SETTINGS_KEY,
+} from './constants'
 import { lockdownLevelOptions, type LockdownSettings, LockdownSettingsSchema } from './schema'
 
 export function isInside(root: string, value: string): boolean {
@@ -20,55 +27,66 @@ export function isInside(root: string, value: string): boolean {
   return normalizedValue === root || normalizedValue.startsWith(normalizedRoot)
 }
 
-export function loadSettings(ctx: ExtensionContext): LockdownSettings | null {
+/**
+ * Parse a single settings key from a settings object.
+ *
+ * Returns:
+ * - `{ found: false }` when the key is absent (caller should fall through to the next source/key),
+ * - `{ found: true, value }` when the key is present and valid,
+ * - `null` when the key is present but invalid (caller must notify + shutdown).
+ */
+function parseLockdownKey(
+  raw: Record<string, unknown>,
+  key: string,
+  ctx: ExtensionContext,
+): { found: boolean; value?: LockdownSettings } | null {
+  // Explicit presence check: a missing key falls through to the next source,
+  // while a present-but-invalid key is a hard error.
+  if (!(key in raw)) {
+    return { found: false }
+  }
+
+  const parsed = LockdownSettingsSchema.safeParse(raw[key])
+  if (!parsed.success) {
+    for (const issue of parsed.error.issues) {
+      ctx.ui.notify(`[LOCKDOWN] ${issue.path[0] as string} - ${issue.message}`, 'error')
+    }
+    return null
+  }
+
+  return { found: true, value: parsed.data }
+}
+
+export function loadSettings(ctx: ExtensionContext, isSubagent = false): LockdownSettings | null {
   const sm = SettingsManager.create(ctx.cwd)
-  const projectSettings = sm.getProjectSettings()
-  const globalSettings = sm.getGlobalSettings()
+  const projectSettings = sm.getProjectSettings() as Record<string, unknown>
+  const globalSettings = sm.getGlobalSettings() as Record<string, unknown>
 
-  // Read project settings first
-  const {
-    success: projectSuccess,
-    data: projectLockdownSettings,
-    error: projectError,
-  } = LockdownSettingsSchema.safeParse((projectSettings as Record<string, unknown>).lockdown)
+  // Key-ordered lookup: subagent profile first (project → global), then fall
+  // back to the generic `lockdown` key (project → global), then defaults.
+  const keys = isSubagent ? [SUBAGENT_SETTINGS_KEY, SETTINGS_KEY] : [SETTINGS_KEY]
+  const sources = [projectSettings, globalSettings]
 
-  if (!projectSuccess && projectError.issues.length > 0) {
-    for (const issue of projectError.issues) {
-      ctx.ui.notify(`[LOCKDOWN] ${issue.path[0] as string} - ${issue.message}`, 'error')
+  for (const key of keys) {
+    for (const source of sources) {
+      const result = parseLockdownKey(source, key, ctx)
+      if (result === null) {
+        ctx.shutdown()
+        return null
+      }
+      if (result.found) {
+        return result.value ?? null
+      }
     }
-
-    ctx.shutdown()
-    return null
   }
 
-  if (projectSuccess && projectLockdownSettings) {
-    return projectLockdownSettings
-  }
-
-  // Global settings fallback
-  const {
-    success: globalSuccess,
-    data: globalLockdownSettings,
-    error: globalError,
-  } = LockdownSettingsSchema.safeParse((globalSettings as Record<string, unknown>).lockdown)
-
-  if (!globalSuccess && globalError.issues.length > 0) {
-    for (const issue of globalError.issues) {
-      ctx.ui.notify(`[LOCKDOWN] ${issue.path[0] as string} - ${issue.message}`, 'error')
-    }
-
-    ctx.shutdown()
-    return null
-  }
-
-  if (globalSuccess && globalLockdownSettings) {
-    return globalLockdownSettings
-  }
-
-  // Use defaults
+  // Use defaults. Note: fileAccess is a required key, so its default objects
+  // must be nested under `fileAccess` (passing them at the top level throws).
   return LockdownSettingsSchema.parse({
-    external: { protected: {}, unprotected: {} },
-    internal: { protected: {}, unprotected: {} },
+    fileAccess: {
+      external: { protected: {}, unprotected: {} },
+      internal: { protected: {}, unprotected: {} },
+    },
   })
 }
 
