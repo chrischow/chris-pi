@@ -1,6 +1,6 @@
 {
   "name": "@chrischow/pi-lockdown",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "A Pi extension to add security constraints to agent tool usage.",
   "author": "Chris Chow",
   "license": "MIT",
