@@ -12,7 +12,7 @@
       "shadcn_docs": "warn",
       "fetch_url": "warn",
       "nest_generate": "warn",
-      "subagent_task": "allow"
+      "subagent": "allow"
     },
     "defaultTools": [
       "read",
