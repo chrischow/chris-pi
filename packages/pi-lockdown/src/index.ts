@@ -5,7 +5,7 @@ import { Box, Container, SettingsList, Text } from '@earendil-works/pi-tui'
 
 import { SUBAGENT_FLAG } from './constants'
 import { type LockdownLevel, LockdownLevelSchema, LockdownSettingsSchema } from './schema'
-import { constructSettingsList, isInside, loadSettings } from './utils'
+import { constructSettingsList, isInside, isPiReadablePath, loadSettings } from './utils'
 
 // Settings
 let lockdownSettings = LockdownSettingsSchema.parse({
@@ -94,6 +94,12 @@ export default function (pi: ExtensionAPI) {
       permAction = 'edit'
     } else if (isWrite) {
       permAction = 'write'
+    }
+
+    // Pi's own installation directory is safe to look up even when external
+    // or under node_modules. Never exempt writes, edits, or custom tools.
+    if (permAction === 'read' && isPiReadablePath(ctx.cwd, inputPath)) {
+      return
     }
 
     let permission: LockdownLevel

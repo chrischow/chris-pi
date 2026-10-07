@@ -1,6 +1,7 @@
+import { realpathSync } from 'node:fs'
 import path from 'node:path'
 
-import { type ExtensionContext, SettingsManager } from '@earendil-works/pi-coding-agent'
+import { type ExtensionContext, getPackageDir, SettingsManager } from '@earendil-works/pi-coding-agent'
 import type { SettingItem } from '@earendil-works/pi-tui'
 
 import {
@@ -12,6 +13,24 @@ import {
   SUBAGENT_SETTINGS_KEY,
 } from './constants'
 import { lockdownLevelOptions, type LockdownSettings, LockdownSettingsSchema } from './schema'
+
+// Pi's own installation directory is safe to read: its README, docs,
+// examples, source, dist, and bundled dependencies. Writes, edits, and custom
+// tools still use the normal permissions.
+export function isPiReadablePath(cwd: string, inputPath: string): boolean {
+  try {
+    // Pi's file tools accept an @ prefix on paths.
+    const requestedPath = inputPath.startsWith('@') ? inputPath.slice(1) : inputPath
+    const target = realpathSync(path.resolve(cwd, requestedPath))
+    const root = realpathSync(getPackageDir())
+    const relative = path.relative(root, target)
+    return relative === '' || (relative !== '..' && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative))
+  } catch {
+    // Missing paths or an inaccessible package root must use the ordinary
+    // permissions.
+    return false
+  }
+}
 
 export function isInside(root: string, value: string): boolean {
   // Resolve `value` relative to `root`, NOT the process CWD.

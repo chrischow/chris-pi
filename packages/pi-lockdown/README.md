@@ -29,6 +29,10 @@ On every tool call, Lockdown evaluates (1) whether the target path is internal o
 - `warn`: Execution is halted - you must confirm the action
 - `block`: Execution is blocked unconditionally
 
+### Pi package lookups
+
+Read-only lookups (`read`, `grep`, `find`, and `ls`) inside Pi's installed package directory are always allowed, even when those paths are external or match a protected pattern such as `**/node_modules/**`. This covers Pi's `README.md`, `docs/`, `examples/`, `src/`, and `dist/` as well as the package's bundled dependencies, and lets a search be rooted at the package directory itself. The exception uses Pi's installed package path, not an arbitrary directory named `docs`. Paths outside the package (including through symlinks) are not exempt. Edits, writes, and custom tools still follow the normal permissions.
+
 ### Empty write protection
 
 Lockdown also blocks empty writes (`write` with empty content) as a safeguard against file soft-deletion workarounds.
