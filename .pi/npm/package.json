@@ -2,7 +2,7 @@
   "name": "pi-extensions",
   "private": true,
   "dependencies": {
-    "@chrischow/pi-lockdown": "^0.4.0",
-    "@plannotator/pi-extension": "^0.28.6"
+    "@chrischow/pi-lockdown": "^0.5.0",
+    "@plannotator/pi-extension": "^0.28.31"
   }
 }
